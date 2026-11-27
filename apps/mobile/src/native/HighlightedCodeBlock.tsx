@@ -4,9 +4,11 @@ import { Pressable, ScrollView, Text } from "react-native";
 import type { MarkdownStyle } from "react-native-enriched-markdown";
 
 import { Menu } from "../components/ui/Menu";
+import { CopyTextButton } from "../features/threads/CopyTextButton";
 import { useMarkdownCodeHighlight } from "../features/threads/markdownCodeHighlightState";
 import { copyTextWithHaptic } from "../lib/copyTextWithHaptic";
 import { type HighlightScheme, withTokenStarts } from "../lib/highlights";
+import { themeColorWithAlpha } from "../lib/mobileTheme";
 import { CodeBlockFrame, CodeBlockHeaderButton } from "./CodeBlockFrame";
 import { fencedCodeMarkdown } from "./codeBlockMarkdown";
 import type { NativeMarkdownTextStyle } from "./SelectableMarkdownText.types";
@@ -114,11 +116,12 @@ export function HighlightedCodeBlock(props: {
             active={wrapped}
             onPress={() => setWrapped((value) => !value)}
           />
-          <CodeBlockHeaderButton
-            icon="doc.on.doc"
-            label={gt("Copy code")}
-            textStyle={textStyle}
-            onPress={() => copyTextWithHaptic(code)}
+          <CopyTextButton
+            accessibilityLabel={gt("Copy code")}
+            text={code}
+            tintColor={themeColorWithAlpha(textStyle.codeColor, 0.6)}
+            iconSize={14}
+            buttonSize={14}
           />
         </>
       }
