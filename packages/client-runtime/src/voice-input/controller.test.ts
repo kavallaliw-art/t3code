@@ -483,7 +483,8 @@ describe("VoiceInputController", () => {
   );
 
   it("uses the native five-minute cap and commits one final transcript", async () => {
-    const harness = createHarness();
+    const onDurationLimit = vi.fn();
+    const harness = createHarness({ onDurationLimit });
     await harness.controller.start();
     expect(harness.recorder.record).toHaveBeenCalledWith({
       forDuration: VOICE_RECORDING_LIMIT_SECONDS,
@@ -493,22 +494,108 @@ describe("VoiceInputController", () => {
       hasError: false,
       error: null,
       url: "file:///previous-recording.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
     });
     expect(harness.controller.currentState.phase).toBe("recording");
 
-    const stopping = harness.controller.stop();
-    harness.controller.handleRecorderStatus({
+    await harness.controller.handleRecorderStatus({
       isFinished: true,
       hasError: false,
       error: null,
       url: "file:///voice.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
     });
-    await stopping;
+    await harness.controller.handleRecorderStatus({
+      isFinished: true,
+      hasError: false,
+      error: null,
+      url: "file:///voice.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
+    });
 
+    expect(onDurationLimit).toHaveBeenCalledOnce();
     expect(harness.commits).toEqual([
       { text: "hello new text", selection: { start: 14, end: 14 } },
     ]);
     expect(harness.deleted).toEqual(["file:///voice.m4a"]);
+  });
+
+  it("does not report a manual stop as the recording limit", async () => {
+    const onDurationLimit = vi.fn();
+    const harness = createHarness({ onDurationLimit });
+    await harness.controller.start();
+
+    const stopping = harness.controller.stop();
+    await harness.controller.handleRecorderStatus({
+      isFinished: true,
+      hasError: false,
+      error: null,
+      url: "file:///voice.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
+    });
+    await stopping;
+
+    expect(onDurationLimit).not.toHaveBeenCalled();
+    expect(harness.commits).toEqual([
+      { text: "hello new text", selection: { start: 14, end: 14 } },
+    ]);
+  });
+
+  it("does not report a native completion before the recording limit", async () => {
+    const onDurationLimit = vi.fn();
+    const harness = createHarness({ onDurationLimit });
+    await harness.controller.start();
+
+    await harness.controller.handleRecorderStatus({
+      isFinished: true,
+      hasError: false,
+      error: null,
+      url: "file:///voice.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000 - 1,
+    });
+
+    expect(onDurationLimit).not.toHaveBeenCalled();
+    expect(harness.commits).toEqual([
+      { text: "hello new text", selection: { start: 14, end: 14 } },
+    ]);
+  });
+
+  it.each([
+    {
+      outcome: "an interruption",
+      status: {
+        isFinished: true,
+        hasError: false,
+        error: null,
+        url: null,
+        durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
+      },
+      expectedError: "Voice recording was interrupted.",
+    },
+    {
+      outcome: "a recorder error",
+      status: {
+        isFinished: true,
+        hasError: true,
+        error: "Audio route changed",
+        url: "file:///voice.m4a",
+        durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
+      },
+      expectedError: "Audio route changed",
+    },
+  ])("does not report $outcome as the recording limit", async ({ status, expectedError }) => {
+    const onDurationLimit = vi.fn();
+    const harness = createHarness({ onDurationLimit });
+    await harness.controller.start();
+
+    await harness.controller.handleRecorderStatus(status);
+
+    expect(onDurationLimit).not.toHaveBeenCalled();
+    expect(harness.commits).toEqual([]);
+    expect(harness.controller.currentState).toMatchObject({
+      phase: "error",
+      error: expectedError,
+    });
   });
 
   it.each(["cancel", "dispose", "ownerChanged"] as const)(
@@ -858,6 +945,7 @@ describe("VoiceInputController", () => {
       hasError: true,
       error: "Audio route changed",
       url: "file:///voice.m4a",
+      durationMillis: VOICE_RECORDING_LIMIT_SECONDS * 1_000,
     });
 
     expect(harness.commits).toEqual([]);

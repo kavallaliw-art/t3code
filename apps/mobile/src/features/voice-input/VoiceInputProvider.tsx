@@ -8,6 +8,10 @@ import { Platform } from "react-native";
 import { Effect } from "effect";
 import { Atom, AtomRegistry, AsyncResult } from "effect/reactivity";
 import { makeMutable } from "react-native-reanimated";
+import { msg } from "gt-react-native";
+
+import * as Dialog from "../../components/ui/Dialog";
+import { m } from "../../i18n/messages";
 
 import {
   type MicrophoneEntry,
@@ -102,6 +106,7 @@ export const voiceInputAtom = Atom.make((get) => {
         hasError: status.hasError || status.mediaServicesDidReset === true,
         error: status.error,
         url: status.url,
+        durationMillis: status.durationMillis ?? 0,
       });
     },
     selectInput: (inputs) => {
@@ -120,6 +125,13 @@ export const voiceInputAtom = Atom.make((get) => {
   });
   const session: VoiceInputSession = new VoiceInputSession({
     recorder,
+    onDurationLimit: () => {
+      Dialog.alert(
+        m(msg("Recording stopped at the 5-minute limit")),
+        m(msg("Your recording is being transcribed into the original draft.")),
+        [{ text: m(msg("OK")) }],
+      );
+    },
     getTranscriber: () => {
       const route = registry.get(voiceRouteAtom);
       if (route) return route.transcriber;

@@ -69,6 +69,13 @@ index 2ff4a474fdea3efa652436a8a3960c3669ad298b..1ced279991294d3d81cb20fa339ca73e
      val recordingOptions = options ?: this.options
      val mediaRecorder = createRecorder(recordingOptions)
      recorder = mediaRecorder
+@@ -228,5 +228,6 @@ class AudioRecorder(
+           "hasError" to stopFailed,
+           "error" to stopError,
++          "durationMillis" to durationMillis,
+           "url" to if (stopFailed) {
+             null
+           } else {
 @@ -245,10 +256,15 @@ class AudioRecorder(
    }
  
@@ -367,7 +374,15 @@ diff --git a/build/Audio.types.d.ts b/build/Audio.types.d.ts
 index 332b0c2f38310616c6bff64cb86fc8d5688d1280..ae3937de9f8c3f6af880c9dadbc27b9510d18215 100644
 --- a/build/Audio.types.d.ts
 +++ b/build/Audio.types.d.ts
-@@ -613,6 +613,8 @@ export type AudioMode = {
+@@ -274,5 +274,7 @@ export type RecordingStatus = {
+     error: string | null;
+     /** File URL of the completed recording, if available. */
+     url: string | null;
++    /** Duration of the completed recording in milliseconds, when available. */
++    durationMillis?: number;
+     /**
+      * Whether the media services were reset by the system.
+@@ -613,6 +615,8 @@ export type AudioMode = {
       * @default false
       */
      shouldRouteThroughEarpiece: boolean;
@@ -511,10 +526,11 @@ index 198fe6dc95b564ff3916657f14ea67fc44d2e424..9e8f37a0256aaef7c0fc080caf6bbb8f
      } catch {
        currentState = .error
        throw AudioRecordingException("Failed to configure audio session: \(error.localizedDescription)")
-@@ -285,16 +291,16 @@ class AudioRecorder: SharedRef<AVAudioRecorder>, RecordingResultHandler {
+@@ -285,16 +291,18 @@ class AudioRecorder: SharedRef<AVAudioRecorder>, RecordingResultHandler {
    }
  
    func didFinish(_ recorder: AVAudioRecorder, successfully flag: Bool) {
++    let durationMillis = totalDuration
 -    // Update internal state when recording finishes automatically (e.g., from recordForDuration)
 -    currentState = .stopped
 +    // Update internal state when AVAudioRecorder finishes or fails.
@@ -529,7 +545,9 @@ index 198fe6dc95b564ff3916657f14ea67fc44d2e424..9e8f37a0256aaef7c0fc080caf6bbb8f
 -      "error": nil,
 +      "hasError": !flag,
 +      "error": flag ? nil : "Recording failed",
-       "url": recorder.url.absoluteString
+-      "url": recorder.url.absoluteString
++      "url": recorder.url.absoluteString,
++      "durationMillis": durationMillis
      ])
    }
 diff --git a/ios/AudioRecords.swift b/ios/AudioRecords.swift
@@ -564,7 +582,15 @@ diff --git a/src/Audio.types.ts b/src/Audio.types.ts
 index fe5f5c3a08d2be39b0fdb1da6ae6b158931cac4c..a5538db8d9118cd4fcb0ddb17b14137dc8826207 100644
 --- a/src/Audio.types.ts
 +++ b/src/Audio.types.ts
-@@ -646,6 +646,8 @@ export type AudioMode = {
+@@ -288,5 +288,7 @@ export type RecordingStatus = {
+   error: string | null;
+   /** File URL of the completed recording, if available. */
+   url: string | null;
++  /** Duration of the completed recording in milliseconds, when available. */
++  durationMillis?: number;
+   /**
+    * Whether the media services were reset by the system.
+@@ -646,6 +648,8 @@ export type AudioMode = {
     * @default false
     */
    shouldRouteThroughEarpiece: boolean;

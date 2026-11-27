@@ -29,7 +29,7 @@ function createSession(
   overrides?: Partial<
     Pick<
       VoiceInputSessionDependencies,
-      "configureRecording" | "releaseRecording" | "sampleRecording"
+      "configureRecording" | "onDurationLimit" | "releaseRecording" | "sampleRecording"
     >
   >,
 ) {
@@ -267,18 +267,41 @@ describe("global voice input", () => {
   });
 
   it("finishes the original draft at the recording limit while it is off screen", async () => {
-    const { session, recorder } = createSession();
-    const commit = vi.fn();
+    const onDurationLimit = vi.fn();
+    const { session, recorder } = createSession({ onDurationLimit });
+    const drafts = new Map([
+      ["first", "first"],
+      ["second", "second"],
+    ]);
+    let visibleDraft = "first";
     await session.start(
-      createVoiceInputTarget("first", () => "first", commit, { start: 5, end: 5 }),
+      createVoiceInputTarget(
+        "first",
+        () => drafts.get("first") ?? null,
+        (text) => drafts.set("first", text),
+        { start: 5, end: 5 },
+      ),
     );
+    visibleDraft = "second";
+
     await session.controller.handleRecorderStatus({
       isFinished: true,
       hasError: false,
       error: null,
       url: recorder.uri,
+      durationMillis: 5 * 60 * 1_000,
     });
-    expect(commit).toHaveBeenCalledWith("first spoken text", { start: 17, end: 17 });
+    await session.controller.handleRecorderStatus({
+      isFinished: true,
+      hasError: false,
+      error: null,
+      url: recorder.uri,
+      durationMillis: 5 * 60 * 1_000,
+    });
+
+    expect(onDurationLimit).toHaveBeenCalledOnce();
+    expect(drafts.get("first")).toBe("first spoken text");
+    expect(drafts.get(visibleDraft)).toBe("second");
     expect(session.controller.currentState.phase).toBe("idle");
   });
 

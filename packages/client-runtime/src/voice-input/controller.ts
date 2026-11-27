@@ -81,6 +81,7 @@ export type VoiceRecorderStatus = {
   readonly hasError: boolean;
   readonly error: string | null;
   readonly url: string | null;
+  readonly durationMillis: number;
 };
 
 export interface VoiceRecorder {
@@ -119,6 +120,7 @@ export type VoiceInputControllerDependencies = {
     selection: { readonly start: number; readonly end: number },
   ) => void;
   readonly onStateChange: (state: VoiceInputState) => void;
+  readonly onDurationLimit?: () => void;
   /** Resolves error copy in the UI language; English when omitted. */
   readonly resolve?: MFunctionType;
 };
@@ -537,6 +539,9 @@ export class VoiceInputController {
     if (status.isFinished) {
       if (!status.url) {
         return this.interruptRecording();
+      }
+      if (status.durationMillis >= VOICE_RECORDING_LIMIT_SECONDS * 1_000) {
+        this.dependencies.onDurationLimit?.();
       }
       return this.finishRecording(true, status.url);
     }
