@@ -290,6 +290,7 @@ overrides:
   '@ff-labs/fff-node': 0.11.0
   '@legendapp/list': 3.9.0
   '@pierre/diffs': 1.7.0-beta.4
+  '@pierre/highlights@0.5.1': 0.6.0
   '@react-native-menu/menu': 2.0.0
   '@react-navigation/native-stack': 7.21.0
   dbus-next: 0.10.2
@@ -1122,7 +1123,7 @@ importers:
         version: 1.0.0(@pierre/theme@2.0.0)(@shikijs/themes@4.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(shiki@4.2.0)
       '@pierre/words':
         specifier: file:deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz
-        version: file:apps/web/deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz(@pierre/highlights@0.5.1)(react@19.3.0)
+        version: file:apps/web/deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz(@pierre/highlights@0.6.0)(react@19.3.0)
       '@t3tools/client-runtime':
         specifier: workspace:*
         version: link:../../packages/client-runtime
@@ -6509,8 +6510,8 @@ packages:
   '@pierre/highlights@0.5.0':
     resolution: {integrity: sha512-G8gscrHrik3YjKd+tPTcmivJ/W0zRrtg4adVxnfX7+415+0Qplo6qUWuEX5R0UkA1fMhmE2sOSuLBMNGDtLhIw==}
 
-  '@pierre/highlights@0.5.1':
-    resolution: {integrity: sha512-c2WF6sgwgKdxXU6FpWDLWUYHRca/cJy+3QJkWAqYqEAFxqlPf8eSH0ehHcFFjKBmT+9KBl9H7q6z7HMRU7+m6g==}
+  '@pierre/highlights@0.6.0':
+    resolution: {integrity: sha512-5RhenEkZxlcsw2hrDaYlGyT6ERfQgHSvZxRg/ByZ11SVkoWuAwDMozL7HxUfUnOVyShD5WKMxqiakg8S/8Fi7A==}
 
   '@pierre/patches@0.0.1':
     resolution: {integrity: sha512-NycJQVQNuqmBdr7u1LsUcmkiIz1fRm9xhWZyRbm21oJYd0MVVCa45t9Lsuj5IKrTMBonxOuh4LMv+R3BpL4bmQ==}
@@ -6554,7 +6555,7 @@ packages:
     resolution: {integrity: sha512-EuIvU8imMY3c/deOHm9/gEh9VJga8R7jjWiIKfjKHbDXjgMo/O3NDN15H0dLc/vo+YTf/QpY0xinfnv7xpf7Rw==, tarball: file:apps/web/deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz}
     version: 0.2.2-t3.4
     peerDependencies:
-      '@pierre/highlights': '>=0.5.1'
+      '@pierre/highlights': 0.6.0
       react: ^18.3.1 || ^19.0.0
     peerDependenciesMeta:
       '@pierre/highlights':
@@ -16670,7 +16671,7 @@ snapshots:
 
   '@pierre/diffs@1.7.0-beta.4(patch_hash=7edcdd484a99c7ec0b2667499c4cb21d113ec9bea1f8570c0b0a030d33bbf1cd)(@shikijs/themes@4.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@pierre/highlights': 0.5.1
+      '@pierre/highlights': 0.6.0
       '@pierre/patches': 0.0.1
       '@pierre/theme': 2.0.0
       '@pierre/theming': 1.0.2(@pierre/theme@2.0.0)(@shikijs/themes@4.2.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(shiki@4.2.0)
@@ -16686,7 +16687,7 @@ snapshots:
 
   '@pierre/highlights@0.5.0': {}
 
-  '@pierre/highlights@0.5.1': {}
+  '@pierre/highlights@0.6.0': {}
 
   '@pierre/patches@0.0.1': {}
 
@@ -16713,9 +16714,9 @@ snapshots:
       - '@shikijs/themes'
       - shiki
 
-  '@pierre/words@file:apps/web/deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz(@pierre/highlights@0.5.1)(react@19.3.0)':
+  '@pierre/words@file:apps/web/deps/pierre-words-0.2.2-t3.4-7c04b7f1.tgz(@pierre/highlights@0.6.0)(react@19.3.0)':
     optionalDependencies:
-      '@pierre/highlights': 0.5.1
+      '@pierre/highlights': 0.6.0
       react: 19.3.0
 
   '@pinojs/redact@0.4.0': {}

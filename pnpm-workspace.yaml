@@ -119,6 +119,8 @@ overrides:
   "@ff-labs/fff-node": 0.11.0
   "@legendapp/list": 3.9.0
   "@pierre/diffs": 1.7.0-beta.4
+  # Adds BSL/1C to the shared web lexer while Diffs is pinned for local editor patches.
+  "@pierre/highlights@0.5.1": 0.6.0
   "@react-native-menu/menu": 2.0.0
   "@react-navigation/native-stack": 7.21.0
   dbus-next: 0.10.2
