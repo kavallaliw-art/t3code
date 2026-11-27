@@ -1665,6 +1665,18 @@ function ComposerPromptEditorTiptapInner(
   );
 
   const onClipboardPasteCapture = (event: React.ClipboardEvent<HTMLElement>) => {
+    // Chromium re-reads the system clipboard on every getData, including ProseMirror's read
+    // before handlePaste. Cache plain text on this event so every consumer shares the first value.
+    const getData = event.clipboardData.getData.bind(event.clipboardData);
+    let plainText: string | undefined;
+    Object.defineProperty(event.clipboardData, "getData", {
+      value: (format: string) => {
+        const normalized = format.toLowerCase();
+        if (normalized !== "text" && normalized !== "text/plain") return getData(format);
+        if (plainText === undefined) plainText = getData(format);
+        return plainText;
+      },
+    });
     onPaste(event, (plainTextOnly) => {
       const paste = readPastedComposerClipboard(
         event.clipboardData,

@@ -506,6 +506,65 @@ it("a failed image-only first send of a new thread keeps the new draft", async (
   expect(page.getByText("Copy message", { exact: true }).query()).toBeNull();
 });
 
+it("keeps pasted text when the clipboard changes to an image after the first read", async () => {
+  const thread = threadWithHistory("paste-text-clipboard-change", 1);
+  using _environment = installFakeEnvironment([thread]);
+  __setClientSettingsForTests({
+    ...DEFAULT_CLIENT_SETTINGS,
+    onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
+  });
+  const router = getRouter(
+    createMemoryHistory({ initialEntries: [`/${ENVIRONMENT_ID}/${thread.id}`] }),
+  );
+  await router.load();
+  await using _app = await render(<AppRoot router={router} />, {
+    // AppRoot brings its own router.
+    router: false,
+  });
+  const editor = page.getByTestId("composer-editor");
+  await expect.element(editor).toBeVisible();
+  await userEvent.click(editor);
+  await userEvent.keyboard("Existing draft ");
+
+  const copy = (write: (clipboardData: DataTransfer) => void) => {
+    const onCopy = (event: ClipboardEvent) => {
+      if (event.clipboardData) write(event.clipboardData);
+      event.preventDefault();
+    };
+    document.addEventListener("copy", onCopy, true);
+    document.execCommand("copy");
+    document.removeEventListener("copy", onCopy, true);
+  };
+  copy((clipboardData) => clipboardData.setData("text/plain", "Check this. "));
+  const reads: string[] = [];
+  let replaceClipboard = true;
+  const liveGetData = DataTransfer.prototype.getData;
+  const getData = vi.spyOn(DataTransfer.prototype, "getData").mockImplementation(function (
+    this: DataTransfer,
+    format,
+  ) {
+    const value = liveGetData.call(this, format);
+    if (format === "text/plain") {
+      reads.push(value);
+      if (replaceClipboard) {
+        replaceClipboard = false;
+        copy((clipboardData) =>
+          clipboardData.items.add(new File([PNG], "next.png", { type: "image/png" })),
+        );
+      }
+    }
+    return value;
+  });
+  using _getData = { [Symbol.dispose]: () => getData.mockRestore() };
+
+  await userEvent.keyboard("{ControlOrMeta>}v{/ControlOrMeta}");
+
+  expect({ reads, draft: editor.element().textContent }).toEqual({
+    reads: ["Check this. "],
+    draft: "Existing draft Check this. ",
+  });
+});
+
 it.each(["new", "existing"] as const)(
   "Enter while an image compresses shows a cancellable banner, cancels on edit or Esc, and still sends after leaving a %s thread",
   async (kind) => {

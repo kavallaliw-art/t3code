@@ -3048,9 +3048,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     readClipboard: (plainTextOnly: boolean) => PastedComposerClipboard,
   ) => {
     const { files, folders } = splitTransferredFiles(event.clipboardData);
-    const plainText = event.clipboardData.getData("text/plain");
     const bypassAutoAttachment = consumePasteAsTextShortcut(pasteAsTextShortcutUntilRef);
     const paste = readClipboard(bypassAutoAttachment);
+    const plainText = paste.text;
     const pastedContext = Boolean(paste.context?.records.length);
     const canAttachFiles = !pastedContext && activeThreadId !== null && files.length > 0;
     const htmlImageContent =
