@@ -1,6 +1,6 @@
 import { runAtomCommand } from "@t3tools/client-runtime/state/runtime";
 import { useAtomValue } from "@effect/atom-react";
-import { AudioModule, RecordingPresets, type RecordingStatus } from "expo-audio";
+import { AudioModule, createAudioPlayer, RecordingPresets, type RecordingStatus } from "expo-audio";
 import { File } from "expo-file-system";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { useSyncExternalStore } from "react";
@@ -28,6 +28,7 @@ import {
   type VoiceTranscriber,
 } from "@t3tools/client-runtime/voice-input";
 import { createLazyVoiceRecorder } from "./lazyVoiceRecorder";
+import { playRecordingLimitCue } from "./recordingLimitCue";
 import { VOICE_WAVEFORM_SAMPLE_COUNT } from "./voiceInputMetering";
 import { VoiceInputSession } from "./voiceInputSession";
 import { createVoiceRecordingPermission } from "./voiceRecordingPermission";
@@ -90,6 +91,7 @@ export const voiceInputAtom = Atom.make((get) => {
   );
   let keepAwakeSequence = 0;
   let audioToken: ReturnType<typeof acquireAudioSession> | null = null;
+  let recordingLimitCuePending = false;
   let recordingMicrophoneOrder: ReadonlyArray<MicrophoneEntry> | null = null;
   const permission = createVoiceRecordingPermission(() => {
     void session.controller.appMovedToBackground();
@@ -126,6 +128,7 @@ export const voiceInputAtom = Atom.make((get) => {
   const session: VoiceInputSession = new VoiceInputSession({
     recorder,
     onDurationLimit: () => {
+      recordingLimitCuePending = true;
       Dialog.alert(
         m(msg("Recording stopped at the 5-minute limit")),
         m(msg("Your recording is being transcribed into the original draft.")),
@@ -163,8 +166,19 @@ export const voiceInputAtom = Atom.make((get) => {
       }
     },
     releaseRecording: async () => {
-      if (audioToken) await releaseAudioSession(audioToken);
-      audioToken = null;
+      try {
+        if (audioToken) await releaseAudioSession(audioToken);
+      } finally {
+        audioToken = null;
+        if (recordingLimitCuePending) {
+          recordingLimitCuePending = false;
+          playRecordingLimitCue(() =>
+            createAudioPlayer(require("../../../assets/audio/recording-limit.wav"), {
+              updateInterval: 100,
+            }),
+          );
+        }
+      }
     },
     deleteRecording: (uri) => new File(uri).delete(),
     sampleRecording: () => {
