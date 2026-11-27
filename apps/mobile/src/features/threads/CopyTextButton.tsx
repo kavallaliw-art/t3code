@@ -21,6 +21,7 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
   readonly borderColor?: ColorValue;
   readonly iconSize?: number;
   readonly buttonSize?: number;
+  readonly hitSlop?: number;
 }) {
   const gt = useGT();
   const [copiedAtMs, setCopiedAtMs] = useState<number | null>(null);
@@ -34,7 +35,7 @@ export const CopyTextButton = memo(function CopyTextButton(props: {
       accessibilityRole="button"
       accessibilityLabel={copied ? gt("Copied") : props.accessibilityLabel}
       disabled={props.text.length === 0}
-      hitSlop={8}
+      hitSlop={props.hitSlop ?? 8}
       onLongPress={props.onLongPress}
       onPress={async () => {
         try {

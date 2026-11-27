@@ -122,6 +122,7 @@ export function HighlightedCodeBlock(props: {
             tintColor={themeColorWithAlpha(textStyle.codeColor, 0.6)}
             iconSize={14}
             buttonSize={14}
+            hitSlop={10}
           />
         </>
       }
